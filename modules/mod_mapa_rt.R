@@ -36,12 +36,16 @@ mod_mapa_rt_server <- function(id) {
       lag_se       <- 0
       janela_se    <- 4   # nº de SEs somadas em cada janela (atual vs anterior)
 
-      # Data de corte: descarta tudo APÓS o fim de abril/2026 para evitar SEs
-      # ainda não consolidadas (notificação incompleta gera RAs "sem base").
-      # A última SE inteiramente dentro de abril é a SE 16/2026 (19–25/abr).
-      data_corte <- as.Date("2026-04-25")
-      se_corte   <- lubridate::epiweek(data_corte)   # 16
-      ano_corte  <- lubridate::epiyear(data_corte)   # 2026
+      # SE de corte automática: descarta as `se_nao_consolidadas` SEs mais
+      # recentes da base, cuja notificação ainda está incompleta (gera RAs
+      # "sem base" e quedas artificiais). Conta a partir da última SE que a
+      # base realmente tem - não de "hoje" -, então acompanha cada atualização
+      # do ETL sem edição manual. O ETL só mantém SE 1–52 (52 SEs por ano).
+      se_nao_consolidadas <- 2
+      idx_ultima <- max(df$NU_ANO * 52L + df$SEM_NUM, na.rm = TRUE)
+      idx_corte  <- idx_ultima - se_nao_consolidadas
+      ano_corte  <- (idx_corte - 1L) %/% 52L
+      se_corte   <- (idx_corte - 1L) %%  52L + 1L
 
       ano_recente <- min(max(df$NU_ANO, na.rm = TRUE), ano_corte)
 

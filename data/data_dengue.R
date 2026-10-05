@@ -50,20 +50,27 @@ dados <- dados |>
 # =============================================================================
 # 3. Tabelas de domínio
 # =============================================================================
+# Códigos conforme o Dicionário de Dados do SINAN Online (Dengue/Chikungunya),
+# os mesmos usados pelo painel de Vigilância (R/fct_db_update.R de lá).
 rotulos_evolucao <- c(
   "1" = "Cura",
   "2" = "Óbito pelo agravo",
-  "3" = "Óbito em investigação",
-  "4" = "Óbito por outras causas",
+  "3" = "Óbito por outras causas",
+  "4" = "Óbito em investigação",
   "9" = "Ignorado"
 )
 
+# 10/11/12 são os códigos atuais do SINAN Online; 1/2/3 (SINAN Net) continuam
+# aceitos e mapeados para as mesmas categorias.
 rotulos_classi_fin <- c(
-  "1" = "Dengue",
-  "2" = "Dengue com sinais de alarme",
-  "3" = "Dengue grave",
-  "5" = "Descartado",
-  "8" = "Inconclusivo"
+  "10" = "Dengue",
+  "11" = "Dengue com sinais de alarme",
+  "12" = "Dengue grave",
+  "1"  = "Dengue",
+  "2"  = "Dengue com sinais de alarme",
+  "3"  = "Dengue grave",
+  "5"  = "Descartado",
+  "8"  = "Inconclusivo"
 )
 
 harmonizar_ra <- c(
