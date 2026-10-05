@@ -37,7 +37,7 @@ cat("Leitura PostgreSQL: ", nrow(dados), "registros\n")
 # =============================================================================
 # 2. De-para de RAs via setor censitário
 # =============================================================================
-depara <- read.csv("data/setores_RAs_DF.csv")
+depara <- read.csv("data/setores_RAs_DF.csv", colClasses = c(CD_SETOR = "character"))
 
 dados <- dados |>
   left_join(
