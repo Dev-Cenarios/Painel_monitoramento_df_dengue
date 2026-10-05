@@ -109,13 +109,39 @@ pesos <- nb2listw(viz, style = "W", zero.policy = TRUE)
 cat("Setores na malha espacial:", nrow(setores), "\n")
 cat("Setores sem nenhum vizinho (isolados):", sum(card(viz) == 0), "\n")
 
+# Diagnóstico do casamento CD_SETOR (banco) x CD_SETOR (malha IBGE): se o
+# formato divergir (zeros, sufixo, casas decimais), nenhum caso cai na malha
+# e o Gi* fica sem sentido - melhor parar com uma mensagem clara.
+casamento <- casos_por_setor_ano |>
+  mutate(na_malha = CD_SETOR %in% setores$CD_SETOR) |>
+  group_by(NU_ANO) |>
+  summarise(casos_malha = sum(casos[na_malha]), casos = sum(casos), .groups = "drop") |>
+  mutate(pct = round(100 * casos_malha / casos, 1))
+cat("\nCasos com setor encontrado na malha, por ano:\n")
+print(as.data.frame(casamento), row.names = FALSE)
+
+if (sum(casamento$casos_malha) == 0) {
+  stop(
+    "Nenhum CD_SETOR do banco existe na malha de setores. Formatos diferentes? ",
+    "Banco: ", paste(head(unique(casos_por_setor_ano$CD_SETOR), 3), collapse = ", "),
+    " | Malha: ", paste(head(setores$CD_SETOR, 3), collapse = ", "),
+    call. = FALSE
+  )
+}
+
 # =============================================================================
 # 6. Getis-Ord Gi*(d) por ano, com correção de Bonferroni (Z >= 3.71),
 #    igual ao critério do artigo (em vez do clássico Z = 1.96)
 # =============================================================================
 LIMIAR_HOTSPOT <- 3.71  # Bonferroni, conforme Bisanzio et al. / Dzul-Manzanilla et al.
 
-anos <- sort(unique(casos_por_setor_ano$NU_ANO))
+# Só entram anos com casos na malha: um ano todo zerado não tem variância, o
+# escore Z vira NaN e o localG() falha.
+anos <- casamento$NU_ANO[casamento$casos_malha > 0]
+anos_fora <- setdiff(casamento$NU_ANO, anos)
+if (length(anos_fora)) {
+  cat("Anos sem casos na malha (ignorados no Gi*):", paste(anos_fora, collapse = ", "), "\n")
+}
 
 resultado_hotspots <- map_dfr(anos, function(ano_i) {
   
