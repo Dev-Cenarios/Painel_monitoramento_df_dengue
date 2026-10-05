@@ -1,0 +1,30 @@
+# Dados sensiveis - NUNCA versionar
+# Os Parquets/DuckDB gerados pelo ETL (data/data_dengue.R, data/etl_hotspots.R)
+# incluem `dengue_df_processado.parquet`, que e microdado DE CASO (1 linha por
+# notificacao). Regenere com os ETLs - ver README.md.
+data/*.parquet
+data/*.duckdb
+data/dados/
+data/dengue_consolidado*.csv
+
+# Segredos / config local - NUNCA versionar
+.Renviron
+.env
+*.pem
+*.key
+
+# Cache em disco (Sass/bslib - regeneravel), lixo de depuracao e shiny-server
+app_cache/
+Rplot*.png
+tralhas.R
+restart.txt
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+desktop.ini
