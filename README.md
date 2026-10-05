@@ -70,10 +70,12 @@ Este roteiro é para quem nunca rodou o painel. Siga na ordem.
 
 - **R 4.1 ou superior** (https://cran.r-project.org) e, de preferência, o
   **RStudio** (https://posit.co/download/rstudio-desktop/).
-- **Acesso ao banco PostgreSQL** `cenarios_ai` (usuário e senha fornecidos
-  pela equipe responsável). Sem esse acesso não é possível gerar os dados.
-- Estar na **rede interna** onde o banco está acessível (o servidor do banco
-  não é público).
+- **Notificações de dengue geocodificadas** num banco PostgreSQL:
+  - **equipe do projeto**: acesso ao banco `cenarios_ai` (credenciais
+    fornecidas pela equipe, na rede interna onde ele está acessível);
+  - **demais usuários**: os seus próprios dados do SINAN, geocodificados
+    pelo mesmo sistema usado neste painel — veja
+    [Usando os seus próprios dados](#32-usando-os-seus-próprios-dados).
 
 ### 2.2 Baixar o projeto
 
@@ -115,7 +117,7 @@ install.packages(c(
    ```
    PG_HOST=endereço do servidor do banco
    PG_PORT=5432
-   PG_DB=cenarios_ai
+   PG_DB=nome do banco (cenarios_ai, para a equipe do projeto)
    PG_USER=seu usuário
    PG_PASS=sua senha
    ```
@@ -172,6 +174,44 @@ navegador.
 | `Regiao_adm` | Região Administrativa de residência |
 | `Regiao_sau1` | Região de Saúde |
 | `CD_SETOR` | Setor censitário (Censo 2022) obtido no geovínculo |
+
+### 3.1 Equipe do projeto
+
+As notificações já estão geocodificadas no banco `cenarios_ai` (tabela
+`dados_geolink."DF_geo_Dengue"`). Basta pedir as credenciais à equipe e
+seguir o [Início rápido](#2-início-rápido-passo-a-passo).
+
+### 3.2 Usando os seus próprios dados
+
+O banco do projeto **não é público** (contém dados pessoais de saúde). Para
+rodar o painel com os dados do seu território:
+
+1. **Obtenha as notificações de dengue do SINAN** junto à vigilância
+   epidemiológica local. São dados sensíveis: o uso exige autorização e os
+   cuidados da LGPD.
+2. **Geocodifique os endereços** com o
+   [Sistema de Geocodificação de Dados de Saúde](https://cenarios.unb.br/sistema-de-geocodificacao-de-dados-de-saude/)
+   do Projeto CENÁRIOS (UnB) — o mesmo sistema usado para gerar a base deste
+   painel. Ele transforma os endereços das notificações em localização
+   geográfica, de onde vem o setor censitário (`CD_SETOR`). Metodologia em
+   Sanglard, Garcia & Ramalho (2025), *Geospatial Health*,
+   [doi:10.4081/gh.2025.1403](https://doi.org/10.4081/gh.2025.1403).
+3. **Carregue o resultado numa tabela PostgreSQL** com as colunas da tabela
+   acima e aponte o `.Renviron` para o seu banco (seção 2.4). Para conferir
+   as colunas da sua tabela:
+
+   ```sql
+   SELECT column_name FROM information_schema.columns
+   WHERE table_schema = 'seu_schema' AND table_name = 'sua_tabela';
+   ```
+
+4. **Ajuste o nome da tabela** na consulta (`FROM dados_geolink."DF_geo_Dengue"`)
+   em `data/data_dengue.R` e `data/etl_hotspots.R`, se o seu for diferente.
+5. **Fora do DF**, substitua também os insumos territoriais, que são
+   específicos do Distrito Federal: o de-para setor → RA
+   (`data/setores_RAs_DF.csv`), a malha de setores (`data/DF_setores_CD2022.*`,
+   disponível para qualquer UF no site do IBGE) e a tabela de população por
+   RA (seção 11).
 
 ---
 
