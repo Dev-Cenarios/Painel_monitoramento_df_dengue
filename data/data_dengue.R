@@ -34,6 +34,11 @@ dados <- dbGetQuery(con_pg, '
 dbDisconnect(con_pg)
 cat("Leitura PostgreSQL: ", nrow(dados), "registros\n")
 
+# O banco grava o setor do Censo 2022 com sufixo "P" (ex. 530010805060005P);
+# o de-para e a malha usam só os 15 dígitos.
+dados <- dados |>
+  mutate(CD_SETOR = gsub("[^0-9]", "", as.character(CD_SETOR)))
+
 # =============================================================================
 # 2. De-para de RAs via setor censitário
 # =============================================================================
