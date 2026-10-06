@@ -173,7 +173,7 @@ navegador.
 | `EVOLUCAO` | Evolução do caso (cura, óbito...) |
 | `Regiao_adm` | Região Administrativa de residência |
 | `Regiao_sau1` | Região de Saúde |
-| `CD_SETOR` | Setor censitário (Censo 2022) obtido no geovínculo |
+| `CD_SETOR` | Setor censitário (Censo 2022) obtido no geovínculo. Os ETLs mantêm só os dígitos (o banco grava com sufixo, ex. `530010805060005P`; a malha e o de-para usam os 15 dígitos) |
 
 ### 3.1 Equipe do projeto
 
@@ -239,10 +239,12 @@ carregada uma única vez na inicialização.
 1. **Leitura** de todas as notificações da tabela `DF_geo_Dengue`.
 2. **RA de cada caso**: quando o caso tem setor censitário, a RA vem do
    de-para `setores_RAs_DF.csv` (prevalece sobre a RA digitada no SINAN);
-   senão, usa a `Regiao_adm` original. Nomes harmonizados (ex.:
-   "SCIA (ESTRUTURAL)" → "SCIA") e em maiúsculas.
+   senão, usa a `Regiao_adm` original, em maiúsculas e com os nomes
+   harmonizados para os do de-para (`harmonizar_ra`, ex.:
+   "SCIA (ESTRUTURAL)" → "SCIA", "RIACHO FUNDO I" → "RIACHO FUNDO",
+   "SOL NASCENTE/PÔR DO SOL" → "SOL NASCENTE E POR DO SOL").
 3. **Exclusões**:
-   - casos sem RA (vazia ou "Não Informado");
+   - casos sem RA (vazia, "Não Informado" ou "Ignorado");
    - casos sem data de início de sintomas;
    - casos com início de sintomas **antes de 2021** ou após o ano corrente;
    - casos na **semana epidemiológica 53** (só são mantidas as SE 1–52).
@@ -338,7 +340,9 @@ Método de **Dzul-Manzanilla et al. (2021)**, *The Lancet Planetary Health*,
 aplicado aos setores censitários:
 
 1. Mesmo tratamento do ETL principal, mantendo só os casos **com setor
-   censitário**.
+   censitário** que exista na malha de 2022. O script imprime, por ano, a
+   proporção de casos cujo setor foi encontrado na malha (hoje ~97%) e para
+   com erro se nenhum casar; anos sem nenhum caso na malha são ignorados.
 2. **Casos por setor × ano**; setores sem casos entram com zero.
 3. Em cada ano, os casos são **padronizados (escore Z)** entre os setores.
 4. **Vizinhança por contiguidade "queen"** (setores que se tocam, inclusive
@@ -445,7 +449,9 @@ antes dos scripts é obrigatório.
 | Erro ao instalar `sf` | Faltam GDAL/GEOS/PROJ no sistema. | Instale as bibliotecas de sistema (seção 2.3). |
 | Mapa ou aba "Análises" demora muito para abrir | Malhas não simplificadas (ou regravadas pelo ETL de hotspots). | Rode `prep/01_simplifica_malhas.R`. |
 | Painel não mostra os dados novos no servidor | O app carrega parte dos dados só na inicialização. | `touch restart.txt` na pasta do app. |
-| Aviso "RAs sem população cadastrada" no ETL | Nome de RA novo/diferente da tabela de população. | Inclua a RA nas tabelas de população (seção 11). |
+| Aviso "RAs sem população cadastrada" no ETL | Nome de RA do banco diferente da tabela de população, ou RA nova. | Se for grafia diferente, inclua em `harmonizar_ra` (`data/data_dengue.R`); se for RA nova, inclua nas tabelas de população (seção 11). |
+| `Nenhum CD_SETOR do banco existe na malha de setores` (ETL de hotspots) | Formato do código do setor no banco mudou. | Compare os exemplos "Banco" e "Malha" da mensagem e ajuste a limpeza de `CD_SETOR` logo após a leitura em `data/etl_hotspots.R` e `data/data_dengue.R`. |
+| Proporção baixa em "Casos com setor encontrado na malha" | Setores de outra malha (ex. Censo 2010) ou códigos incompletos. | Confira o geovínculo na origem; casos fora da malha ficam fora dos hotspots. |
 
 ---
 
