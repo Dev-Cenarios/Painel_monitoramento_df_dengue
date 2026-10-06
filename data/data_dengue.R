@@ -78,9 +78,15 @@ rotulos_classi_fin <- c(
   "8"  = "Inconclusivo"
 )
 
+# Nomes da Regiao_adm do banco (já em maiúsculas) -> nomes do de-para e da
+# tabela de população. Vale para os casos cujo setor não casou com o de-para.
 harmonizar_ra <- c(
-  "SCIA (ESTRUTURAL)" = "SCIA",
-  "SIA"               = "SIA"
+  "SCIA (ESTRUTURAL)"       = "SCIA",
+  "SIA"                     = "SIA",
+  "RIACHO FUNDO I"          = "RIACHO FUNDO",
+  "SOL NASCENTE/PÔR DO SOL" = "SOL NASCENTE E POR DO SOL",
+  "SOL NASCENTE/POR DO SOL" = "SOL NASCENTE E POR DO SOL",
+  "ÁGUA QUENTE"             = "AGUA QUENTE"
 )
 
 # =============================================================================
@@ -124,10 +130,10 @@ casos_individuais <- dados |>
   filter(
     !is.na(Regiao_adm),
     Regiao_adm != "",
-    Regiao_adm != "Não Informado"
+    !toupper(Regiao_adm) %in% c("NÃO INFORMADO", "IGNORADO")
   ) |>
   mutate(
-    Regiao_adm   = recode(Regiao_adm, !!!harmonizar_ra, .default = toupper(Regiao_adm)),
+    Regiao_adm   = recode(toupper(Regiao_adm), !!!harmonizar_ra),
     DT_SIN_PRI   = as.Date(substr(DT_SIN_PRI, 1, 10)),
     NU_ANO       = lubridate::epiyear(DT_SIN_PRI),
     SEM_NUM      = lubridate::epiweek(DT_SIN_PRI),
@@ -264,7 +270,7 @@ cat("Período:            ",
 cat("Anos presentes:     ", paste(sort(unique(casos_individuais$NU_ANO)), collapse = ", "), "\n")
 
 # Diagnóstico de RAs sem correspondência de população (afeta incidência e canal endêmico)
-ras_sem_pop <- dados_ra |> filter(is.na(populacao) | populacao == 10000) |> pull(Regiao_adm)
+ras_sem_pop <- setdiff(dados_ra$Regiao_adm, populacao_ra$ra)
 if (length(ras_sem_pop) > 0) {
   cat("ATENÇÃO — RAs sem população cadastrada (usando fallback 10000):\n")
   cat(" ", paste(ras_sem_pop, collapse = ", "), "\n")
