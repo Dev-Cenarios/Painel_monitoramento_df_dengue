@@ -16,26 +16,27 @@
 mod_filtros_ui <- function(id) {
   ns <- shiny::NS(id)
 
+  # selectizeInput com dropdownParent = "body" (mesmo ajuste do
+  # mod_geo_filter.R do dengue_ride): o menu sai de dentro do card - que tem
+  # overflow: hidden e abria uma barra de rolagem interna - e passa a
+  # sobrepor os graficos. O z-index do menu vem de dengue_df_ui_assets().
+  seletor <- function(input_id, rotulo, opcoes) {
+    shiny::selectizeInput(
+      ns(input_id), rotulo,
+      choices = opcoes,
+      width   = "100%",
+      options = list(dropdownParent = "body")
+    )
+  }
+
   bslib::layout_column_wrap(
     width = 1/4,
     gap   = "1rem",
 
-    shiny::selectInput(
-      ns("ano"), "Ano",
-      choices = c("Todos", as.character(ANOS_DISPONIVEIS))
-    ),
-    shiny::selectInput(
-      ns("semana"), "Semana Epi.",
-      choices = c("Todas", as.character(1:52))
-    ),
-    shiny::selectInput(
-      ns("ra"), "Região Administrativa",
-      choices = c("Todas", RAS_DISPONIVEIS)
-    ),
-    shiny::selectInput(
-      ns("regiao_saude"), "Região de Saúde",
-      choices = c("Todas", REGIOES_SAUDE_DISPONIVEIS)
-    )
+    seletor("ano",          "Ano",                   c("Todos", as.character(ANOS_DISPONIVEIS))),
+    seletor("semana",       "Semana Epi.",           c("Todas", as.character(1:52))),
+    seletor("ra",           "Região Administrativa", c("Todas", RAS_DISPONIVEIS)),
+    seletor("regiao_saude", "Região de Saúde",       c("Todas", REGIOES_SAUDE_DISPONIVEIS))
   )
 }
 
@@ -44,17 +45,24 @@ mod_filtros_resumo <- function(id) {
   shiny::uiOutput(shiny::NS(id)("resumo"), inline = TRUE)
 }
 
-#' @param foco_externo reactive que devolve NULL ou o nome de uma RA. Permite
-#'   que outros componentes (o mapa de incidencia, por clique) reposicionem o
-#'   filtro sem duplicar estado.
+#' @param foco_externo reactive que devolve NULL ou list(ra = <nome da RA ou
+#'   "Todas">, .ts). Permite que outros componentes (clique no mapa de
+#'   incidencia, botoes "Visao geral") reposicionem o filtro sem duplicar
+#'   estado. Escolher uma RA zera a Regiao de Saude (uma RA fora da regiao
+#'   escolhida deixaria o recorte vazio); "Todas" devolve a visao geral do DF
+#'   (RA e Regiao de Saude), mantendo ano e semana.
 mod_filtros_server <- function(id, foco_externo = shiny::reactive(NULL)) {
 
   shiny::moduleServer(id, function(input, output, session) {
 
     shiny::observeEvent(foco_externo(), {
-      ra <- foco_externo()
-      shiny::req(!is.null(ra), ra %in% RAS_DISPONIVEIS)
-      shiny::updateSelectInput(session, "ra", selected = ra)
+      f  <- foco_externo()
+      ra <- f$ra
+      shiny::req(!is.null(ra), ra %in% c("Todas", RAS_DISPONIVEIS))
+      shiny::updateSelectizeInput(session, "ra", selected = ra)
+      if (!identical(input$regiao_saude, "Todas")) {
+        shiny::updateSelectizeInput(session, "regiao_saude", selected = "Todas")
+      }
     }, ignoreInit = TRUE, ignoreNULL = TRUE)
 
     filtros <- shiny::reactive({

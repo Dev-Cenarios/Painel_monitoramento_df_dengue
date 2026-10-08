@@ -14,7 +14,7 @@
 ui <- bslib::page_navbar(
   title        = "Dengue DF",
   theme        = TEMA_DENGUE_DF,
-  window_title = "Dengue DF — Painel de Vigilância Epidemiológica",
+  window_title = "Dengue DF — Painel de Monitoramento Epidemiológico",
   padding      = "1rem",
   fillable     = FALSE,
 
@@ -23,13 +23,17 @@ ui <- bslib::page_navbar(
     "Painel",
 
     shiny::tagList(
+      # z-index do dropdown dos seletores + popover que fecha ao clicar fora
+      # (modules/utils_ui.R), portado do dengue_ride.
+      dengue_df_ui_assets(),
+
       # ----------------------------------------------------------- cabecalho --
       shiny::tags$div(
         class = "d-flex justify-content-between align-items-end mb-3",
         shiny::tags$div(
           shiny::tags$h4(class = "mb-0 fw-semibold", "Dengue DF"),
           shiny::tags$span(class = "text-muted small",
-                           "Painel de vigilância epidemiológica · fonte SINAN")
+                           "Painel de monitoramento epidemiológico · fonte SINAN")
         ),
         shiny::tags$span(
           class = "text-muted small",
@@ -43,7 +47,16 @@ ui <- bslib::page_navbar(
         bslib::card_header(
           class = "bg-primary text-white d-flex justify-content-between align-items-center",
           shiny::tags$span(class = "fw-semibold", "Recorte"),
-          mod_filtros_resumo("filtros")
+          shiny::tags$div(
+            class = "d-flex align-items-center gap-3",
+            mod_filtros_resumo("filtros"),
+            # Volta a visao geral do DF (RA e Regiao de Saude = Todas),
+            # mesmo efeito do botao sobreposto ao mapa. Ver server.R.
+            shiny::actionButton(
+              "limpar_selecao", "Visão geral",
+              class = "btn btn-sm btn-light"
+            )
+          )
         ),
         bslib::card_body(
           mod_filtros_ui("filtros")
@@ -85,7 +98,8 @@ ui <- bslib::page_navbar(
       # ------------------------------- 4. mapa de tendencia (largura total) --
       cartao_grafico(
         titulo = "Rt × Razão Histórica por RA",
-        saida  = mod_mapa_rt_saida("mapa_rt")
+        saida     = mod_mapa_rt_saida("mapa_rt"),
+        controles = mod_mapa_rt_controles("mapa_rt")
       ),
 
       # -------------------------------- 5. canal endemico | heatmap (6/6) ----

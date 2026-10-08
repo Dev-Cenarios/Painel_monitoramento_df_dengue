@@ -13,6 +13,8 @@
 server <- function(input, output, session) {
 
   # -- barramento de foco ----------------------------------------------------
+  # list(ra = <RA ou "Todas">, .ts): clique no mapa de incidencia ou botoes
+  # "Visao geral". O .ts faz cliques repetidos sempre notificarem.
   foco_bus <- shiny::reactiveVal(NULL)
 
   # -- filtros -----------------------------------------------------------------
@@ -21,9 +23,27 @@ server <- function(input, output, session) {
     foco_externo = shiny::reactive(foco_bus())
   )
 
+  # RA em foco (NULL = visao geral do DF). Destacada no mapa de incidencia e
+  # no grafico Rt x razao historica - mesmo papel do selected_location do
+  # dengue_ride, so que derivado direto do recorte (o DF tem um unico nivel).
+  ra_selecionada <- shiny::reactive({
+    ra <- filtros()$ra
+    if (identical(ra, "Todas")) NULL else ra
+  })
+
+  # Botao "Visao geral" no cabecalho do card de recorte (config/ui.R).
+  shiny::observeEvent(input$limpar_selecao, {
+    foco_bus(list(ra = "Todas", .ts = as.numeric(Sys.time())))
+  }, ignoreInit = TRUE)
+
   # -- reactives compartilhadas, uma consulta por grao/recorte ----------------
+  # So as colunas que os modulos leem (RA, evolucao, sexo, faixa etaria): sem
+  # recorte, a abertura do painel traz o microdado inteiro para o R; cortar
+  # datas, classificacao e semana reduz memoria e tempo de transferencia.
   casos_filtrados <- shiny::reactive({
-    aplicar_filtro(tbl_casos(), filtros()) |> dplyr::collect()
+    aplicar_filtro(tbl_casos(), filtros()) |>
+      dplyr::select(Regiao_adm, EVOLUCAO, CS_SEXO, FAIXA_ETARIA) |>
+      dplyr::collect()
   }) |> shiny::bindCache(filtros())
 
   diario_filtrado <- shiny::reactive({
@@ -38,8 +58,8 @@ server <- function(input, output, session) {
     aplicar_filtro(tbl_mensal(), filtros()) |> dplyr::collect()
   }) |> shiny::bindCache(filtros())
 
-  # RA agregado (casos + populacao + incidencia) - compartilhado entre o KPI
-  # "Incidência Média" e o mapa de incidencia.
+  # RA agregado (casos + populacao + incidencia) do recorte - usado pelo KPI
+  # "Incidência Média". O mapa usa ra_mapa(), abaixo, que ignora o filtro de RA.
   ra_agregado <- shiny::reactive({
     calcular_ra_agregado(casos_filtrados())
   }) |> shiny::bindCache(filtros())
@@ -53,17 +73,38 @@ server <- function(input, output, session) {
   )
 
   # -- mapa de incidencia --------------------------------------------------------
-  clique_mapa <- mod_mapa_incidencia_server("mapa_inc", ra_agregado = ra_agregado)
+  # O mapa desenha SEMPRE todas as RAs: recorte de ano/semana/regiao de saude,
+  # mas nao o de RA (escolher uma RA so a destaca, nao esvazia o mapa). A
+  # contagem por RA e feita no DuckDB - so ~33 linhas trafegam para o R.
+  ra_mapa <- shiny::reactive({
+    f <- filtros()
+    f$ra <- "Todas"
+    aplicar_filtro(tbl_casos(), f) |>
+      dplyr::count(Regiao_adm, name = "casos") |>
+      dplyr::collect() |>
+      dplyr::mutate(casos = as.numeric(casos)) |>
+      dplyr::left_join(populacao_ra, by = c("Regiao_adm" = "ra")) |>
+      dplyr::mutate(
+        populacao  = tidyr::replace_na(populacao, 10000),
+        incidencia = round((casos / populacao) * 100000, 1)
+      )
+  }) |> shiny::bindCache(filtros()$ano, filtros()$semana, filtros()$regiao_saude)
+
+  clique_mapa <- mod_mapa_incidencia_server(
+    "mapa_inc",
+    ra_mapa        = ra_mapa,
+    ra_selecionada = ra_selecionada
+  )
 
   shiny::observeEvent(clique_mapa(), {
     foco_bus(clique_mapa())
   }, ignoreInit = TRUE, ignoreNULL = TRUE)
 
   # -- mapa de tendencia (Rt x razao historica) ---------------------------------
-  # Sem parametros: sempre compara TODAS as RAs contra o proprio historico
-  # (ver nota no topo de modules/mod_mapa_rt.R) - le SEMANAL_COMPLETO direto
-  # do global.R, sem consultar o DuckDB de novo.
-  mod_mapa_rt_server("mapa_rt")
+  # Sempre compara TODAS as RAs contra o proprio historico (ver nota no topo
+  # de modules/mod_mapa_rt.R) - le SEMANAL_COMPLETO direto do global.R, sem
+  # consultar o DuckDB de novo. Recebe a RA em foco so para DESTACA-la.
+  mod_mapa_rt_server("mapa_rt", ra_selecionada = ra_selecionada)
 
   # -- evolucao temporal --------------------------------------------------------
   mod_curva_epidemia_server("curva_epi", diario_filtrado = diario_filtrado)

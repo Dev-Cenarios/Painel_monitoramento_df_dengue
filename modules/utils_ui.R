@@ -86,3 +86,57 @@ cartao_grafico <- function(titulo, saida, controles = NULL, tom = "bg-primary") 
     bslib::card_body(class = "p-0", saida)
   )
 }
+
+
+#' Ajustes de UI globais, injetados uma vez no topo do app (ver config/ui.R). Portado do dengue_ride (R/utils_ui.R).
+#'
+#' 1. DROPDOWN DOS SELETORES por cima de tudo. Os selectize do recorte (ano, semana, RA, regiao)
+#'    usam `dropdownParent = "body"` (modules/mod_filtros.R) para o menu escapar
+#'    do card - que tem `overflow: hidden`. Este z-index garante que o menu,
+#'    ja no <body>, fique acima de cards, KPIs e popovers.
+#'
+#' 2. POPOVER DE "OPCOES" FECHA AO CLICAR FORA (ou Esc). O Bootstrap, sozinho,
+#'    so fecha um popover de gatilho "click" no proprio gatilho ou no X. O
+#'    handler abaixo fecha qualquer `.popover.show` quando o clique cai fora
+#'    dele e fora do gatilho - ignorando cliques no dropdown de um selectize
+#'    (que o `dropdownParent = "body"` joga para fora do popover).
+dengue_df_ui_assets <- function() {
+  shiny::tagList(
+    shiny::singleton(shiny::tags$style(shiny::HTML(
+      ".selectize-dropdown { z-index: 1080 !important; }"
+    ))),
+    shiny::singleton(shiny::tags$script(shiny::HTML(
+"(function() {
+  function insidePicker(t) {
+    return t && t.closest && t.closest('.selectize-dropdown, .selectize-control');
+  }
+  function triggerOf(tip) {
+    return tip.id ? document.querySelector('[aria-describedby=\"' + tip.id + '\"]') : null;
+  }
+  function hide(tip) {
+    var trg  = triggerOf(tip);
+    var inst = (trg && window.bootstrap && bootstrap.Popover)
+      ? bootstrap.Popover.getInstance(trg) : null;
+    var host = (trg && trg.closest) ? trg.closest('bslib-popover') : null;
+    if (inst) inst.hide();
+    else if (host && typeof host.hide === 'function') host.hide();
+    else if (trg) trg.click();
+  }
+  document.addEventListener('click', function(e) {
+    var open = document.querySelectorAll('.popover.show');
+    if (!open.length || insidePicker(e.target)) return;
+    open.forEach(function(tip) {
+      var trg = triggerOf(tip);
+      if (tip.contains(e.target)) return;
+      if (trg && (trg === e.target || trg.contains(e.target))) return;
+      hide(tip);
+    });
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    document.querySelectorAll('.popover.show').forEach(hide);
+  });
+})();"
+    )))
+  )
+}

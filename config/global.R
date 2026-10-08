@@ -31,6 +31,15 @@ library(cachem)
 
 shinyOptions(cache = cachem::cache_mem(max_size = 512 * 1024^2))
 
+# Cache do CSS do tema (Sass) em disco, em app_cache/ (pasta criada no
+# servidor com dono shiny, fora do git): o Bootstrap do tema e compilado uma
+# vez e reaproveitado entre processos e reinicios (touch restart.txt), em vez
+# de ser recompilado a cada processo R novo - a primeira visita depois de um
+# reinicio deixa de pagar essa compilacao.
+if (dir.exists("app_cache") && file.access("app_cache", 2) == 0) {
+  options(sass.cache = sass::sass_file_cache(file.path("app_cache", "sass")))
+}
+
 # ------------------------------------------------------------ fonte de dados --
 DENGUE_DATA_DIR <- Sys.getenv("DENGUE_DF_DATA_DIR", "data")
 
