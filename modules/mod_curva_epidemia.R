@@ -83,7 +83,7 @@ mod_curva_epidemia_server <- function(id, diario_filtrado) {
         title = list(
           text    = "Casos por Semana Epidemiológica",
           subtext = sprintf(
-            "Barras: total histórico %d–%d | Linha âmbar: mediana histórica | Linha escura: %d",
+            "Barras: total histórico %d–%d | Linha azul: mediana histórica | Linha escura tracejada: %d",
             ANO_MIN, ano_recente - 1L, ano_recente
           ),
           textStyle    = list(color = tc$texto, fontSize = 15, fontWeight = "bold"),
@@ -137,10 +137,10 @@ mod_curva_epidemia_server <- function(id, diario_filtrado) {
             itemStyle = list(
               color = htmlwidgets::JS(paste0(
                 "function(p){ var v=p.value, m=", max_val, ";",
-                "if(!v) return 'rgba(203,160,116,0.35)';",
-                "if(v > m*.8) return 'rgba(74,42,16,0.85)';",
-                "if(v > m*.5) return 'rgba(122,74,34,0.8)';",
-                "return 'rgba(169,116,63,0.7)'; }"
+                "if(!v) return '", TONS_DENGUE[["100"]], "';",
+                "if(v > m*.8) return '", TONS_DENGUE[["600"]], "';",
+                "if(v > m*.5) return '", TONS_DENGUE[["400"]], "';",
+                "return '", TONS_DENGUE[["200"]], "'; }"
               )),
               borderRadius = list(3, 3, 0, 0)
             )
@@ -151,8 +151,8 @@ mod_curva_epidemia_server <- function(id, diario_filtrado) {
             data      = as.list(df_ord$mediana),
             smooth    = TRUE,
             symbol    = "none",
-            lineStyle = list(color = PALETA_CHOCOLATE[["ambar"]], width = 2.5, type = "solid"),
-            itemStyle = list(color = PALETA_CHOCOLATE[["ambar"]])
+            lineStyle = list(color = PALETA_DENGUE[["azul_acao"]], width = 2, type = "solid"),
+            itemStyle = list(color = PALETA_DENGUE[["azul_acao"]])
           ),
           list(
             name       = as.character(ano_recente),
@@ -161,10 +161,11 @@ mod_curva_epidemia_server <- function(id, diario_filtrado) {
             smooth     = TRUE,
             symbol     = "circle",
             symbolSize = 5,
-            lineStyle  = list(color = PALETA_CHOCOLATE[["amargo"]], width = 2.5, type = "dashed"),
-            itemStyle  = list(color = PALETA_CHOCOLATE[["amargo"]])
+            lineStyle  = list(color = PALETA_DENGUE[["tinta"]], width = 2, type = "dashed"),
+            itemStyle  = list(color = PALETA_DENGUE[["tinta"]])
           )
         ),
+        textStyle = list(fontFamily = FONTE_GRAFICO),
         grid = list(left = "12%", right = "5%", bottom = "22%", top = "20%")
       )
 

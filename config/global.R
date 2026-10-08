@@ -238,26 +238,71 @@ fmt_num <- function(x, digits = 1) {
          nsmall = digits, scientific = FALSE, trim = TRUE)
 }
 
-# ----------------------------------------------------------- paleta chocolate --
-# Identidade visual portada do dengue_ride (ver R/utils_ui.R la e
-# modules/utils_ui.R aqui): rampa creme -> chocolate, `danger` reservado para
-# alertas epidemiologicos (Rt > 1, incidencia alta, obitos).
-PALETA_CHOCOLATE <- c(
-  creme     = "#FDF7F0",
-  baunilha  = "#F3E4D2",
-  areia     = "#EBD5B8",
-  caramelo  = "#CBA074",
-  cacau     = "#A9743F",
-  chocolate = "#7A4A22",
-  amargo    = "#4A2A10",
-  ambar     = "#C9791F",
-  taupe     = "#8A6A4F",
-  tinta     = "#3E2110"
+# ------------------------------------------------------------- paleta dengue --
+# Identidade visual comum aos tres paineis (dengue_df, dengue_ride e
+# PVdengue_df), baseada no guia Cenarios+: azul Cenarios na interface e uma
+# rampa terracota que representa a dengue (nao ha cor oficial no MS nem na
+# SES-DF; a familia laranja-avermelhada e a associacao mais comum). Mesmos
+# valores em R/utils_ui.R do dengue_ride e R/utils_app_theme.R do PV.
+#
+# Regras de uso:
+#   - magnitude (incidencia, casos)   -> TONS_DENGUE, claro = pouco, escuro = muito
+#   - polaridade (Rt, razao historica) -> azul abaixo do limiar, terracota acima
+#   - estado (alerta, obito)           -> ok/atencao/grave/critico, sempre com rotulo
+#   - categorias (sexo, modelos)       -> SERIES_CENARIOS, na ordem, sem reciclar
+# Validado para daltonismo (protan/deutan) e contraste sobre fundo branco.
+TONS_DENGUE <- c(
+  `50`  = "#FFF2EB", `100` = "#FDDDCF", `200` = "#F7C0A8", `300` = "#ED9E7C",
+  `400` = "#D97F55", `500` = "#C0663C", `600` = "#A34F25", `700` = "#853B15",
+  `800` = "#682B0A", `900` = "#4E1D03"
 )
 
-RAMPA_CHOCOLATE <- unname(PALETA_CHOCOLATE[
-  c("creme", "areia", "caramelo", "cacau", "chocolate", "amargo")
-])
+TONS_AZUL <- c(
+  `50`  = "#ECF7FE", `100` = "#CFE9F9", `200` = "#A8D5F1", `300` = "#7ABEE6",
+  `400` = "#4FA4D3", `500` = "#3891C0", `600` = "#0E7BA8", `700` = "#00638C",
+  `800` = "#004565", `900` = "#00324C"
+)
+
+PALETA_DENGUE <- c(
+  fundo       = "#F2F6F9",
+  superficie  = "#FFFFFF",
+  linha       = "#D8E3EA",
+  tinta       = "#12222B",  # titulos de grafico, numeros, serie em foco
+  texto       = "#4A4A4A",  # corpo
+  sub         = "#7A8B95",  # eixos, legendas, linhas de referencia
+  neutro      = "#B8C4CC",  # "sem dado", "ignorado"
+  azul        = TONS_AZUL[["500"]],
+  azul_acao   = TONS_AZUL[["600"]],
+  azul_titulo = TONS_AZUL[["700"]],
+  dengue      = TONS_DENGUE[["500"]],
+  dengue_forte = TONS_DENGUE[["700"]],
+  ok          = "#17895B",
+  atencao     = "#DCA744",
+  grave       = "#C65D26",
+  critico     = "#8F2639"
+)
+
+SERIES_CENARIOS <- c("#3891C0", "#C0663C", "#6C5CA8", "#5A9E2E",
+                     "#8E3B46", "#B08A1E", "#3F4E9E", "#1B9AAA")
+
+RAMPA_DENGUE <- unname(TONS_DENGUE[c("50", "200", "300", "500", "700", "900")])
+
+# Rt e razao historica: abaixo do limiar em azul, acima em terracota; dentro
+# de cada lado, o tom mais forte e o pior cenario (crescendo).
+CORES_QUADRANTE <- c(
+  abaixo_caindo    = TONS_AZUL[["700"]],
+  abaixo_subindo   = TONS_AZUL[["400"]],
+  acima_caindo     = TONS_DENGUE[["400"]],
+  acima_subindo    = TONS_DENGUE[["700"]],
+  sem_base         = PALETA_DENGUE[["sub"]]
+)
+
+#' Converte "#RRGGBB" em "rgba(r,g,b,a)" (echarts aceita os dois; rgba
+#' quando a cor precisa de transparencia).
+cor_alpha <- function(hex, alpha) {
+  rgb <- grDevices::col2rgb(hex)[, 1]
+  sprintf("rgba(%d,%d,%d,%s)", rgb[1], rgb[2], rgb[3], alpha)
+}
 
 # Nota: o dengue_ride usa cortes fixos do MS (piecewise) pra incidencia, porque
 # la o valor plotado e sempre incidencia ANUAL (o mapa tem seu proprio
@@ -265,20 +310,23 @@ RAMPA_CHOCOLATE <- unname(PALETA_CHOCOLATE[
 # (modules/mod_mapa_incidencia.R) usa o recorte global (ano/semana), que
 # pode somar uma unica semana ou vários anos - a magnitude varia demais pra
 # uma escala fixa fazer sentido, entao o mapa usa visualMap continuo,
-# auto-ajustado ao maximo do recorte atual (RAMPA_CHOCOLATE).
+# auto-ajustado ao maximo do recorte atual (RAMPA_DENGUE).
 
 # Paleta fixa de texto/grade/tooltip para os graficos echarts4r em "e_list()"
 # manual. Substitui o antigo theme_cores() reativo claro/escuro: o painel
 # agora tem uma unica identidade visual (mesma decisao do dengue_ride, que
 # tambem nao tem alternancia de tema).
 CORES_GRAFICO <- list(
-  texto      = PALETA_CHOCOLATE[["amargo"]],
-  sub        = PALETA_CHOCOLATE[["taupe"]],
-  grid       = "#E8DCCB",
+  texto      = PALETA_DENGUE[["tinta"]],
+  sub        = PALETA_DENGUE[["sub"]],
+  grid       = PALETA_DENGUE[["linha"]],
   bg_tooltip = "rgba(255,255,255,0.97)",
-  borda_tt   = PALETA_CHOCOLATE[["caramelo"]],
-  texto_tt   = PALETA_CHOCOLATE[["amargo"]]
+  borda_tt   = PALETA_DENGUE[["linha"]],
+  texto_tt   = PALETA_DENGUE[["tinta"]]
 )
+
+# Fonte dos graficos echarts (o echarts nao herda a fonte do CSS da pagina).
+FONTE_GRAFICO <- "'DM Sans', system-ui, sans-serif"
 
 # --------------------------------------------------------- malha das RAs -----
 GEO_DIR <- DENGUE_DATA_DIR

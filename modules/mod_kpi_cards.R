@@ -3,7 +3,7 @@
 #
 # Seis bslib::value_box no topo do painel (duas linhas de tres) - portado de
 # R/mod_kpi.R do dengue_ride: a cor do box carrega informacao (escurece
-# conforme a situacao se agrava, rampa creme -> chocolate), entao os boxes
+# conforme a situacao se agrava, rampa TONS_DENGUE), entao os boxes
 # sao renderizados via uiOutput em vez de fixados na UI.
 #
 # Nao recalcula agregacoes que ja existem: consome os reactives compartilhados
@@ -75,28 +75,33 @@ mod_kpi_cards_server <- function(id, casos_filtrados, ra_agregado, semanal_filtr
       )
     })
 
-    tom <- function(nome, claro = FALSE) {
+    tom <- function(bg, claro = FALSE) {
       bslib::value_box_theme(
-        bg = PALETA_CHOCOLATE[[nome]],
-        fg = if (claro) PALETA_CHOCOLATE[["amargo"]] else "#FFFFFF"
+        bg = bg,
+        fg = if (claro) PALETA_DENGUE[["tinta"]] else "#FFFFFF"
       )
     }
 
+    # Incidencia: rampa da dengue (mais escuro = mais casos), cortes do MS.
     tema_incidencia <- function(inc) {
-      if (is.na(inc)) return(tom("baunilha", claro = TRUE))
-      if (inc >= 300) return(tom("amargo"))
-      if (inc >= 100) return(tom("cacau"))
-      tom("areia", claro = TRUE)
+      if (is.na(inc)) return(tom(PALETA_DENGUE[["linha"]], claro = TRUE))
+      if (inc >= 300) return(tom(TONS_DENGUE[["800"]]))
+      if (inc >= 100) return(tom(TONS_DENGUE[["600"]]))
+      tom(TONS_DENGUE[["100"]], claro = TRUE)
     }
 
+    # Rt: azul abaixo do limiar, terracota acima (mesma logica do mapa de
+    # tendencia).
     tema_rt <- function(rt) {
-      if (is.na(rt)) return(tom("baunilha", claro = TRUE))
-      if (rt >= 1.25) return(tom("amargo"))
-      if (rt >= 1)    return(tom("chocolate"))
-      tom("areia", claro = TRUE)
+      if (is.na(rt)) return(tom(PALETA_DENGUE[["linha"]], claro = TRUE))
+      if (rt >= 1.25) return(tom(TONS_DENGUE[["800"]]))
+      if (rt >= 1)    return(tom(TONS_DENGUE[["600"]]))
+      tom(TONS_AZUL[["100"]], claro = TRUE)
     }
 
-    tema_obitos <- function(n) if (n > 0) tom("chocolate") else tom("areia", claro = TRUE)
+    tema_obitos <- function(n) {
+      if (n > 0) tom(PALETA_DENGUE[["critico"]]) else tom(PALETA_DENGUE[["linha"]], claro = TRUE)
+    }
 
     output$boxes <- shiny::renderUI({
       k <- indicadores()
@@ -109,7 +114,7 @@ mod_kpi_cards_server <- function(id, casos_filtrados, ra_agregado, semanal_filtr
           bslib::value_box(
             title = "Total de casos",
             value = fmt_int(k$total_casos),
-            theme = tom("chocolate"),
+            theme = tom(PALETA_DENGUE[["dengue_forte"]]),
             shiny::tags$span(class = "small", "no recorte atual")
           ),
           bslib::value_box(
@@ -122,7 +127,7 @@ mod_kpi_cards_server <- function(id, casos_filtrados, ra_agregado, semanal_filtr
           bslib::value_box(
             title = sprintf("SE %s (%d)", k$se_max, k$ano_max),
             value = fmt_int(k$casos_ultima),
-            theme = tom("taupe"),
+            theme = tom(PALETA_DENGUE[["azul_titulo"]]),
             shiny::tags$span(class = "small", "casos na semana mais recente")
           )
         ),

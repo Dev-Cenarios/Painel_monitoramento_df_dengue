@@ -90,15 +90,16 @@ mod_rt_temporal_server <- function(id, semanal_filtrado) {
           data      = as.list(serie$rt),
           connectNulls = FALSE,
           symbol    = "none",
-          lineStyle = list(color = PALETA_CHOCOLATE[["chocolate"]], width = 1.8),
-          areaStyle = list(color = "rgba(122,74,34,0.12)"),
+          lineStyle = list(color = PALETA_DENGUE[["dengue"]], width = 1.8),
+          itemStyle = list(color = PALETA_DENGUE[["dengue"]]),
+          areaStyle = list(color = cor_alpha(PALETA_DENGUE[["dengue"]], 0.12)),
           markLine  = list(
             silent    = TRUE,
             symbol    = list("none", "none"),
             data      = list(list(
               yAxis     = 1,
-              lineStyle = list(color = PALETA_CHOCOLATE[["amargo"]], type = "dashed", width = 1.3),
-              label     = list(formatter = "limiar = 1", color = PALETA_CHOCOLATE[["amargo"]], fontSize = 10)
+              lineStyle = list(color = PALETA_DENGUE[["tinta"]], type = "dashed", width = 1.3),
+              label     = list(formatter = "limiar = 1", color = PALETA_DENGUE[["tinta"]], fontSize = 10)
             ))
           )
         )),
@@ -106,7 +107,8 @@ mod_rt_temporal_server <- function(id, semanal_filtrado) {
           list(type = "inside"),
           list(type = "slider", bottom = 5, height = 18, textStyle = list(color = tc$sub, fontSize = 9))
         ),
-        grid = list(left = "10%", right = "5%", bottom = "20%", top = "22%")
+        grid = list(left = "10%", right = "5%", bottom = "20%", top = "22%"),
+        textStyle = list(fontFamily = FONTE_GRAFICO)
       )
 
       e_charts() |> e_list(opts)

@@ -144,17 +144,17 @@ mod_mapa_rt_server <- function(id) {
             TRUE              ~ "rect"
           ),
           cor = dplyr::case_when(
-            x_val <  1 & taxa_cresc <  1 ~ PALETA_CHOCOLATE[["areia"]],
-            x_val <  1 & taxa_cresc >= 1 ~ PALETA_CHOCOLATE[["caramelo"]],
-            x_val >= 1 & taxa_cresc <  1 ~ PALETA_CHOCOLATE[["cacau"]],
-            x_val >= 1 & taxa_cresc >= 1 ~ PALETA_CHOCOLATE[["amargo"]],
-            TRUE                          ~ PALETA_CHOCOLATE[["taupe"]]
+            x_val <  1 & taxa_cresc <  1 ~ CORES_QUADRANTE[["abaixo_caindo"]],
+            x_val <  1 & taxa_cresc >= 1 ~ CORES_QUADRANTE[["abaixo_subindo"]],
+            x_val >= 1 & taxa_cresc <  1 ~ CORES_QUADRANTE[["acima_caindo"]],
+            x_val >= 1 & taxa_cresc >= 1 ~ CORES_QUADRANTE[["acima_subindo"]],
+            TRUE                          ~ CORES_QUADRANTE[["sem_base"]]
           )
         )
 
       df_sem_base <- df_calc %>%
         filter(sem_base) %>%
-        mutate(cor = PALETA_CHOCOLATE[["taupe"]])
+        mutate(cor = CORES_QUADRANTE[["sem_base"]])
 
       y_faixa_sem_base <- {
         ymax <- suppressWarnings(max(df_validas$taxa_cresc, na.rm = TRUE))
@@ -214,8 +214,8 @@ mod_mapa_rt_server <- function(id) {
             symbolSize = df_sem_base$bubble[i],
             name       = df_sem_base$Regiao_adm[i],
             itemStyle  = list(
-              color       = "rgba(138,106,79,0.15)",
-              borderColor = PALETA_CHOCOLATE[["taupe"]],
+              color       = cor_alpha(CORES_QUADRANTE[["sem_base"]], 0.15),
+              borderColor = CORES_QUADRANTE[["sem_base"]],
               borderWidth = 1.5
             ),
             label = list(
@@ -240,9 +240,9 @@ mod_mapa_rt_server <- function(id) {
       markline_data <- list(
         list(
           yAxis     = 1,
-          lineStyle = list(color = PALETA_CHOCOLATE[["amargo"]], type = "dashed", width = 1.5),
+          lineStyle = list(color = PALETA_DENGUE[["tinta"]], type = "dashed", width = 1.5),
           label     = list(formatter = "Crescimento = 1", position = "end",
-                           color = PALETA_CHOCOLATE[["amargo"]], fontSize = 10)
+                           color = PALETA_DENGUE[["tinta"]], fontSize = 10)
         ),
         list(
           xAxis     = 1,
@@ -254,9 +254,9 @@ mod_mapa_rt_server <- function(id) {
       if (nrow(df_sem_base) > 0) {
         markline_data <- c(markline_data, list(list(
           yAxis     = round(y_faixa_sem_base - 0.1, 2),
-          lineStyle = list(color = PALETA_CHOCOLATE[["taupe"]], type = "dotted", width = 1),
+          lineStyle = list(color = PALETA_DENGUE[["sub"]], type = "dotted", width = 1),
           label     = list(formatter = "Sem base ↑", position = "start",
-                           color = PALETA_CHOCOLATE[["taupe"]], fontSize = 9)
+                           color = PALETA_DENGUE[["sub"]], fontSize = 9)
         )))
       }
 
@@ -311,11 +311,11 @@ mod_mapa_rt_server <- function(id) {
             ),
             list(
               data = list(
-                list(name = "Abaixo · Cresc < 1",     itemStyle = list(color = PALETA_CHOCOLATE[["areia"]])),
-                list(name = "Abaixo · Cresc ≥ 1", itemStyle = list(color = PALETA_CHOCOLATE[["caramelo"]])),
-                list(name = "Acima · Cresc < 1",      itemStyle = list(color = PALETA_CHOCOLATE[["cacau"]])),
-                list(name = "Acima · Cresc ≥ 1",  itemStyle = list(color = PALETA_CHOCOLATE[["amargo"]])),
-                list(name = "Sem base (janela anterior = 0)",  itemStyle = list(color = PALETA_CHOCOLATE[["taupe"]]))
+                list(name = "Abaixo · Cresc < 1",     itemStyle = list(color = CORES_QUADRANTE[["abaixo_caindo"]])),
+                list(name = "Abaixo · Cresc ≥ 1", itemStyle = list(color = CORES_QUADRANTE[["abaixo_subindo"]])),
+                list(name = "Acima · Cresc < 1",      itemStyle = list(color = CORES_QUADRANTE[["acima_caindo"]])),
+                list(name = "Acima · Cresc ≥ 1",  itemStyle = list(color = CORES_QUADRANTE[["acima_subindo"]])),
+                list(name = "Sem base (janela anterior = 0)",  itemStyle = list(color = CORES_QUADRANTE[["sem_base"]]))
               ),
               bottom = 8, left = "center",
               textStyle = list(color = tc$texto, fontSize = 10),
@@ -389,7 +389,8 @@ mod_mapa_rt_server <- function(id) {
               moveOnMouseWheel = FALSE
             )
           ),
-          grid = list(left = "13%", right = "5%", top = "30%", bottom = "20%")
+          grid = list(left = "13%", right = "5%", top = "30%", bottom = "20%"),
+          textStyle = list(fontFamily = FONTE_GRAFICO)
         ))
     })
   })

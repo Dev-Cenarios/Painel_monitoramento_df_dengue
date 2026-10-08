@@ -19,13 +19,13 @@ mod_perfil_casos_server <- function(id, casos_filtrados) {
   moduleServer(id, function(input, output, session) {
 
     # Paleta de sexo compartilhada entre os dois gráficos (amarrada ao NOME,
-    # não à posição). Deliberadamente fora da paleta chocolate: aqui a cor
+    # não à posição). Series 1 e 2 da paleta categorica Cenarios: aqui a cor
     # distingue categorias (não indica severidade), e precisa de contraste
     # real entre si — mesma lógica das cores de quadrante em mod_mapa_rt.R.
     cores_sexo <- c(
-      "Masculino" = "#2980B9",
-      "Feminino"  = "#C9791F",
-      "Ignorado"  = "#8A6A4F"
+      "Masculino" = SERIES_CENARIOS[[1]],
+      "Feminino"  = SERIES_CENARIOS[[2]],
+      "Ignorado"  = PALETA_DENGUE[["neutro"]]
     )
 
     rotular_sexo <- function(x) {
@@ -80,7 +80,8 @@ mod_perfil_casos_server <- function(id, casos_filtrados) {
         e_title(text = "Distribuição por Sexo",
                 textStyle = list(color = tc$texto, fontSize = 13, fontWeight = "bold"),
                 left = "center") %>%
-        e_theme_custom('{"backgroundColor":"transparent"}')
+        e_theme_custom('{"backgroundColor":"transparent"}') %>%
+        e_text_style(fontFamily = FONTE_GRAFICO)
     })
 
     # ── 2. Pirâmide Etária (Masculino × Feminino) ─────────────────────────────
@@ -146,6 +147,7 @@ mod_perfil_casos_server <- function(id, casos_filtrados) {
           )
         ),
         grid = list(left = "3%", right = "4%", top = "22%", bottom = "8%", containLabel = TRUE),
+        textStyle = list(fontFamily = FONTE_GRAFICO),
         xAxis = list(
           type = "value",
           axisLabel = list(

@@ -78,8 +78,8 @@ mod_mapa_incidencia_server <- function(id, ra_agregado) {
           orient     = "vertical",
           left       = 15,
           bottom     = 60,
-          inRange    = list(color = RAMPA_CHOCOLATE),
-          outOfRange = list(color = PALETA_CHOCOLATE[["creme"]]),
+          inRange    = list(color = RAMPA_DENGUE),
+          outOfRange = list(color = TONS_DENGUE[["50"]]),
           text       = list("Alta", "Baixa"),
           textStyle  = list(color = CORES_GRAFICO$texto, fontSize = 11)
         ),
@@ -91,11 +91,12 @@ mod_mapa_incidencia_server <- function(id, ra_agregado) {
           data         = map_data,
           itemStyle    = list(borderColor = "#FFFFFF", borderWidth = 0.8),
           emphasis     = list(
-            itemStyle = list(areaColor = PALETA_CHOCOLATE[["ambar"]]),
+            itemStyle = list(areaColor = TONS_AZUL[["300"]]),
             label     = list(show = TRUE, color = CORES_GRAFICO$texto, fontSize = 10, fontWeight = "bold")
           ),
           label = list(show = FALSE)
-        ))
+        )),
+        textStyle = list(fontFamily = FONTE_GRAFICO)
       )
 
       echarts4r::e_charts() |>

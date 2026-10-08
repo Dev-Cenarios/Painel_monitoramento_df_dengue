@@ -95,30 +95,39 @@ mod_canal_endemico_server <- function(id, filtro_ra) {
                lineStyle = list(opacity = 0), symbol = "none",
                legend = FALSE) |>
         e_line(faixa_inferior, name = "Limite inferior", stack = "canal",
-               areaStyle = list(opacity = 0.9, color = "#f0f0f0"),
+               color = TONS_AZUL[["50"]],
+               areaStyle = list(opacity = 1, color = TONS_AZUL[["50"]]),
                lineStyle = list(opacity = 0), symbol = "none") |>
         e_line(faixa_superior, name = "Limite superior", stack = "canal",
-               areaStyle = list(opacity = 0.9, color = "#d9d9d9"),
+               color = TONS_AZUL[["100"]],
+               areaStyle = list(opacity = 1, color = TONS_AZUL[["100"]]),
                lineStyle = list(opacity = 0), symbol = "none") |>
 
-        # --- mediana histórica ---
+        # --- mediana histórica: referencia em azul, discreta ---
         e_line(mediana, name = "Mediana",
-               color = "#0c2c84", symbol = "none", lineStyle = list(width = 1)) |>
+               color = PALETA_DENGUE[["azul_titulo"]], symbol = "none",
+               lineStyle = list(width = 1.2)) |>
 
-        # --- observado (temporada selecionada) ---
+        # --- observado (temporada selecionada): a curva que importa, em
+        # terracota forte para se destacar das faixas ---
         e_line(p_inc100k, name = paste0("Coeficiente de Incidência (", temporada, ")"),
-               color = "#feb24c", symbol = "none", lineStyle = list(width = 1.6)) |>
+               color = PALETA_DENGUE[["dengue_forte"]], symbol = "none",
+               lineStyle = list(width = 2.2)) |>
 
         e_mark_line(data = list(xAxis = idx_corte - 1),
                     title = "",
-                    lineStyle = list(color = "gray", type = "solid")) |>
+                    lineStyle = list(color = cores$sub, type = "solid")) |>
 
         e_x_axis(name = "Semana Epidemiológica",
-                 axisLabel = list(color = cores$texto, interval = 6)) |>
+                 axisLabel = list(color = cores$sub, interval = 6),
+                 nameTextStyle = list(color = cores$sub)) |>
         e_y_axis(name = "Coeficiente de Incidência\n(por 100.000 hab.)",
-                 axisLabel = list(color = cores$texto)) |>
+                 axisLabel = list(color = cores$sub),
+                 nameTextStyle = list(color = cores$sub),
+                 splitLine = list(lineStyle = list(color = cores$grid, type = "dashed"))) |>
         e_tooltip(trigger = "axis") |>
-        e_legend(bottom = 0, textStyle = list(color = cores$texto))
+        e_legend(bottom = 0, textStyle = list(color = cores$texto)) |>
+        e_text_style(fontFamily = FONTE_GRAFICO)
     })
   })
 }
